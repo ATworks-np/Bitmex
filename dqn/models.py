@@ -16,7 +16,7 @@ def my_lstm(input_shape, action_shape):
     x = LSTM(n_hidden, batch_input_shape=(None, input_shape[0], input_shape[1]), return_sequences=False)(input)
     x = Concatenate()([x,input2])
     x = Dense(100, activation='relu')(x)
-    x = Dense(1, activation='softmax')(x)
+    x = Dense(action_shape, activation='softmax')(x)
 
     model = Model(inputs=[input,input2], outputs=[x], name='my_lstm')
     model.summary()
@@ -28,4 +28,4 @@ def load_lstm(input_shape, action_shape):
     model.summary()
     return model
 
-load_lstm([12,1],3)
+load_lstm([12,4],3)

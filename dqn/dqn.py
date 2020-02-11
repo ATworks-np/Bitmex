@@ -60,47 +60,70 @@ class DQN_Solver:
             return
 
         def reword(self):
+            pass
 
 class trade_system:
     def __init__(self):
-        self.position = {'statas':None,'price':None}
+        self.position = {'dir':None,'price':None,'volume':None}
         self.time = 0
-    def get_price(self):
-        return
+        self.spread = 0.03
+        self.profit = 0
 
-    def buy(self,volume):
-        value =  self.get_price()
-        price = value * volume
-        if self.position['statas'] == None:
-            self.position = {'statas': 'LONG', 'price': price}
+    def get_price(self,dir):
+        res = 100
+        if dir == 'LONG':
+            res *= (1 + self.spread/100)
+        elif dir == 'SHORT':
+            res *= (1 - self.spread/100)
+        return res
+
+
+
+    def order(self,dir,volume):
+        price = self.get_price(dir)
+
+        self.upgrade_poition(dir, price, volume)
+
+
+    def upgrade_poition(self, dir, price, volume):
+        if self.position['dir'] == None:
+            self.position['dir'] = dir
+            self.position['price'] = price
+            self.position['volume'] = volume
+        elif self.position['dir'] == dir:
+            self.position['price'] = (self.position['price'] * self.position['volume'] + price * volume) / (self.position['volume'] + volume)
+            self.position['volume'] += volume
+        elif self.position['dir'] != dir:
+            if self.position['volume'] > volume:
+                self.update_profit(price, volume)
+                self.position['volume'] -= volume
+            else:
+                self.update_profit(price, self.position['volume'])
+                self.position['dir'] = dir
+                self.position['price'] = price
+                self.position['volume'] = volume - self.position['volume']
+
+        if self.position['volume'] == 0:
+            self.position['dir'] = None
+            self.position['price'] = None
+            self.position['volume'] = None
+
+    def update_profit(self, price, volume):
+        if self.position['dir'] == 'LONG': # 買ポジの場合
+            self.profit += (price - self.position['price']) * volume
+        elif self.position['dir'] == 'SHORT':  # 売ポジの場合
+            self.profit -= (price - self.position['price']) * volume
+
+    def calc_inprofit(self, price):
+        if self.position['dir'] == 'SHORT': # 売りポジの場合
+            return -(price - self.position['price']) * self.position['volume']
+        elif self.position['dir'] == 'LONG':  # 買いポジの場合
+            return  (price - self.position['price']) * self.position['volume']
+        else:
             return 0
-        elif self.position['statas']  == 'LONG':
-            self.position['price'] += price
-            return
-        elif self.position['statas']  == 'SHORT':
-            res = self.position['price'] - price
-            self.position = {'statas': None, 'price': None}
-            return res
-
-    def sell(self,volume):
-        value =  self.get_price()
-        price = value * volume
-        if self.position['statas'] == None:
-            self.position = {'statas': 'SHORT', 'price': price}
-            return 0
-        elif self.position['statas']  == 'LONG':
-            res = price - self.position['price']
-            self.position = {'statas': None, 'price': None}
-            return res
-        elif self.position['statas']  == 'SHORT':
-            self.position['price'] += price
-            return 0
-
-
-
-
 
 
 
 if __name__ == '__main__':
-
+    ts = trade_system()
+    print()
